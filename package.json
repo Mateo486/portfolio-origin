@@ -1,0 +1,13 @@
+{
+  "name": "portfolio-origin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Real origin server for mateoaristi.us (portfolio) — fronted by Cloudflare",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
