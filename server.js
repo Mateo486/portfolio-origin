@@ -22,6 +22,7 @@
 const http = require("http");
 const crypto = require("crypto");
 const PORT = process.env.PORT || 8080;
+const ASSET_VER = "3"; // bump on each asset change to bust stale CSS/JS caches
 
 const RESUME = {
   name: "Mateo Aristizabal",
@@ -139,17 +140,17 @@ function shell(title, path, body, withBoot) {
 <meta name="description" content="${RESUME.summary}"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/static/style.css"/>
+<link rel="stylesheet" href="/static/style.css?v=${ASSET_VER}"/>
 </head><body>
 <canvas id="matrix"></canvas>
-${withBoot ? '<div id="boot"><pre id="boot-text"></pre></div>' : ""}
+${withBoot ? '<div id="boot"><pre id="boot-text"></pre></div><script>setTimeout(function(){var b=document.getElementById("boot");if(b)b.classList.add("done");},4500);</script>' : ""}
 <header><div class="bar"><div class="dots"><i></i><i></i><i></i></div>
 <span class="path">~/portfolio/<b>mateo</b> $</span>
 <nav>${link("/", "home")}${link("/about", "about")}${link("/projects", "projects")}${link("/login", "login")}${link("/contact", "contact")}</nav>
 </div></header>
 <div class="wrap">${body}</div>
 <footer>real origin ⚙ · fronted by Cloudflare ⚡ · &copy; ${new Date().getFullYear()} ${RESUME.name}</footer>
-<script src="/static/app.js"></script></body></html>`;
+<script src="/static/app.js?v=${ASSET_VER}"></script></body></html>`;
 }
 
 const sectionHead = (n, t) => `<div class="h"><span class="n">${n}</span><h2><span class="c">#</span> ${t}</h2><span class="rule"></span></div>`;
