@@ -224,7 +224,14 @@ const server = http.createServer((req, res) => {
     { "Content-Type": "image/svg+xml", "Cache-Control": "public, max-age=300" });
 
   // dynamic / uncacheable
-  if (p === "/api/time") return send(res, 200, JSON.stringify({ now: new Date().toISOString(), rand: Math.random(), served_by: "origin" }, null, 2),
+  // host_seen_by_origin echoes the Host header the VPS actually received.
+  // Normally "mateoaristi.us"; the Origin Rule rewrites it to "api.mateoaristi.us" for /api/*.
+  if (p === "/api/time") return send(res, 200, JSON.stringify({
+      now: new Date().toISOString(),
+      rand: Math.random(),
+      served_by: "origin",
+      host_seen_by_origin: req.headers.host,
+    }, null, 2),
     { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
   if (p === "/health") return send(res, 200, "ok", { "Content-Type": "text/plain", "Cache-Control": "no-store" });
 
