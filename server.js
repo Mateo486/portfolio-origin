@@ -247,6 +247,74 @@ const server = http.createServer((req, res) => {
   // machine data
   if (p === "/resume.json") return send(res, 200, JSON.stringify(RESUME, null, 2), { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "public, max-age=600" });
 
+  /* -------------------- API v1 (for API Shield demo) --------------------
+   * All /api/v1/* endpoints are intentionally WIDE OPEN at the origin.
+   * Cloudflare API Shield enforces schema + JWT at the edge; disabling
+   * those edge rules exposes these routes -> great "before/after" demo.
+   */
+  const PROJECTS = [
+    { id: "fdot-crash-diagrammer", name: "FDOT Crash Diagrammer", stack: ["React","TS","Postgres"], summary: "Production tool used by FDOT engineers to diagram crash scenes." },
+    { id: "edge-ai-backend",        name: "Edge AI Backend",        stack: ["Cloudflare Workers","AI Gateway"], summary: "Low-latency AI inference gateway on Cloudflare's edge." },
+    { id: "portfolio-site",         name: "Portfolio (this site)",   stack: ["Node","Cloudflare","Nginx"], summary: "The site you're on: Node origin behind Cloudflare with WAF/Cache/API Shield." },
+  ];
+
+  const jsonOK   = (obj) => send(res, 200, JSON.stringify(obj, null, 2), { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+  const jsonErr  = (code, msg) => send(res, code, JSON.stringify({ error: msg }, null, 2), { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+
+  if (p === "/api/v1/status") return jsonOK({ ok: true, service: "portfolio-api", version: "1.0.0", now: new Date().toISOString() });
+
+  if (p === "/api/v1/projects") return jsonOK({ items: PROJECTS, count: PROJECTS.length });
+
+  if (p.startsWith("/api/v1/projects/")) {
+    const id = p.split("/")[4];
+    const item = PROJECTS.find(x => x.id === id);
+    if (!item) return jsonErr(404, `no project with id '${id}'`);
+    return jsonOK(item);
+  }
+
+  if (p === "/api/v1/contact") {
+    if (req.method !== "POST") return jsonErr(405, "POST required");
+    let body = "";
+    req.on("data", c => { body += c; if (body.length > 4096) req.destroy(); });
+    req.on("end", () => {
+      try {
+        const data = JSON.parse(body || "{}");
+        // origin is intentionally permissive; edge schema validation is the demo
+        return jsonOK({ received: true, echo: { name: data.name || null, email: data.email || null, message: data.message || null } });
+      } catch (e) { return jsonErr(400, "invalid JSON"); }
+    });
+    return;
+  }
+
+  if (p === "/api/v1/private/me") {
+    // wide open at origin. edge JWT validation is the demo: turn it off -> this responds anyway.
+    const auth = req.headers["authorization"] || "";
+    const token = auth.replace(/^Bearer\s+/i, "");
+    let claims = null;
+    try {
+      const [h,pl] = token.split(".");
+      if (h && pl) claims = JSON.parse(Buffer.from(pl, "base64url").toString("utf8"));
+    } catch (_) {}
+    return jsonOK({
+      note: "This route is wide-open at origin. Cloudflare API Shield JWT Validation protects it at the edge.",
+      auth_header_present: !!auth,
+      claims_from_token: claims,
+    });
+  }
+
+  if (p === "/api/v1/leaky") {
+    // deliberately returns fake PII to demo Sensitive Data Detection
+    return jsonOK({
+      user: "demo-user",
+      ssn: "123-45-6789",
+      credit_card: "4111 1111 1111 1111",
+      email: "leaky@example.com",
+      phone: "+1-555-867-5309",
+      note: "This synthetic PII is here to trigger Cloudflare Sensitive Data Detection.",
+    });
+  }
+  /* ---------------------- end API v1 ---------------------- */
+
   // HTML pages: NO Cache-Control on purpose -> DYNAMIC until a Cache Rule
   // marks them eligible + sets an Edge TTL (great before/after demo).
   if (p === "/")         return send(res, 200, home(),     { "Content-Type": "text/html; charset=utf-8" });
