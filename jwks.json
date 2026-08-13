@@ -1,0 +1,12 @@
+{
+  "keys": [
+    {
+      "kty": "RSA",
+      "kid": "portfolio-demo-1",
+      "alg": "RS256",
+      "use": "sig",
+      "n": "sh7zFhQ2HF32Jqq1-EYIe0zl4j4D4TzzpqwOb2RDMJdV34dA_aOP7pJkczjisQno1r9x-6e26Q1HuUB0Umt1B84-nMk_3mC13H9Oq14tcgQ6We3x0GzPUWrBFaZNaMz-36uMSmWrmZ_hU1NyPrlRlvldQ51YYyWRW2nhs05FtcsXpWt1gBmqMkz38N_oxYDmRI_TPO9oKDYl2XmX62fvzwuTCtMztPIUHF-ORnEXMgdjQWjJiiGTEmmG6cpoEV3pZ3b9aaMYlwgA2sN1lGZlZrPoeCmOeblWqjtjsG_tME3e-iVB1FNrTL7R7dZbrz5ShWth_pxnLCd5DH5U5cd32w",
+      "e": "AQAB"
+    }
+  ]
+}

@@ -1,29 +1,33 @@
 #!/usr/bin/env node
 /**
- * Dependency-free HS256 JWT minter.
+ * Dependency-free RS256 JWT minter.
  *
  * Usage:
- *   node mint-jwt.js <secret> [sub] [ttl_seconds]
+ *   node mint-jwt.js [sub] [ttl_seconds] [private_key_path]
  *
- * Example:
- *   node mint-jwt.js super-secret-key mateo 3600
+ * Defaults: sub=mateo, ttl=2592000 (30d), key=./jwt-private.pem
  *
- * Prints one line: the compact JWT. Configure the same secret in
- * Cloudflare API Shield -> JWT Validation for /api/v1/private/*.
+ * The matching public key is in ./jwt-public.pem, and the JWKS Cloudflare
+ * needs to upload is ./jwks.json (regenerate with gen-jwks.js if needed).
  */
 const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
 
-const secret = process.argv[2];
-const sub    = process.argv[3] || "mateo";
-const ttl    = parseInt(process.argv[4] || "3600", 10);
-if (!secret) { console.error("usage: node mint-jwt.js <secret> [sub] [ttl_seconds]"); process.exit(1); }
+const sub    = process.argv[2] || "mateo";
+const ttl    = parseInt(process.argv[3] || "2592000", 10); // 30 days
+const keyPath = process.argv[4] || path.join(__dirname, "jwt-private.pem");
 
+const key = fs.readFileSync(keyPath, "utf8");
 const b64u = (buf) => Buffer.from(buf).toString("base64url");
 const now  = Math.floor(Date.now() / 1000);
-const header  = { alg: "HS256", typ: "JWT", kid: "portfolio-demo-1" };
+
+const header  = { alg: "RS256", typ: "JWT", kid: "portfolio-demo-1" };
 const payload = { iss: "mateoaristi.us", sub, iat: now, exp: now + ttl, scope: "read:private" };
 
 const p1 = b64u(JSON.stringify(header));
 const p2 = b64u(JSON.stringify(payload));
-const sig = crypto.createHmac("sha256", secret).update(`${p1}.${p2}`).digest("base64url");
+const signer = crypto.createSign("RSA-SHA256");
+signer.update(`${p1}.${p2}`);
+const sig = signer.sign(key).toString("base64url");
 console.log(`${p1}.${p2}.${sig}`);
